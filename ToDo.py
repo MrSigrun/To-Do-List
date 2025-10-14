@@ -1,21 +1,38 @@
+from datetime import datetime
+
+DATE_FORMAT = "%Y-%m-%d"
+
 class Task:
-    def __init__(self, title):
+    def __init__(self, title, description="", deadline=None):
         self.title = title
+        self.description = description
         self.status = "todo"
+        self.deadline = None
+        if deadline:
+            self.set_deadline(deadline)
+
+    def set_deadline(self, value):
+        try:
+            self.deadline = datetime.strptime(value, DATE_FORMAT)
+        except ValueError:
+            print(f"Invalid date format! Please use {DATE_FORMAT}.")
+            self.deadline = None
 
     def __str__(self):
-        return f"{self.title} ({self.status})"
+        deadline_str = self.deadline.strftime(DATE_FORMAT) if self.deadline else "-"
+        desc_str = f" | {self.description}" if self.description else ""
+        return f"{self.title} ({self.status}){desc_str} | Deadline: {deadline_str}"
 
 
 class ToDoList:
     def __init__(self):
         self.tasks = []
 
-    def add_task(self, title):
+    def add_task(self, title, description="", deadline=None):
         if not title.strip():
             print("Error: Task title cannot be empty.")
             return
-        task = Task(title)
+        task = Task(title.strip(), description.strip(), deadline)
         self.tasks.append(task)
         print(f"Task '{title}' added successfully!")
 
@@ -60,8 +77,11 @@ def main():
         choice = input("Enter your choice: ").strip()
 
         if choice == "1":
-            title = input("Enter a new task: ")
-            todo.add_task(title)
+            title = input("Enter task title: ")
+            description = input("Enter task description (optional): ")
+            deadline = input(f"Enter deadline ({DATE_FORMAT}) or leave blank: ").strip()
+            deadline = deadline if deadline else None
+            todo.add_task(title, description, deadline)
 
         elif choice == "2":
             todo.view_tasks()
