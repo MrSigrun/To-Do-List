@@ -1,0 +1,19 @@
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+env/
+venv/
+*.egg-info/
+poetry.lock
+
+# Environment variables
+.env
+
+# OS files
+.DS_Store
+Thumbs.db
