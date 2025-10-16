@@ -61,6 +61,24 @@ class Project:
         else:
             print("Invalid task number.")
 
+    def edit_project(self, projects):
+        new_name = input("Enter new project name (max 30 characters): ").strip()
+        if len(new_name) > 30:
+            print("Project name must not exceed 30 characters! Returning to project menu.")
+            return
+        if any(p.name == new_name for p in projects if p != self):
+            print("A project with this name already exists! Returning to project menu.")
+            return
+
+        new_description = input("Enter new project description (max 150 characters): ").strip()
+        if len(new_description) > 150:
+            print("Project description must not exceed 150 characters! Returning to project menu.")
+            return
+
+        self.name = new_name
+        self.description = new_description
+        print(f"Project '{self.name}' updated successfully!")
+
 class ToDoManager:
     def __init__(self):
         self.projects = []
@@ -141,7 +159,7 @@ def main():
                 index = int(input("Enter project number: ")) - 1
                 project = manager.select_project(index)
                 if project:
-                    project_menu(project)
+                    project_menu(project, manager)
             except ValueError:
                 print("Invalid input.")
 
@@ -163,14 +181,15 @@ def main():
         else:
             print("Invalid choice. Try again.")
 
-def project_menu(project):
+def project_menu(project, manager):
     while True:
         print(f"\n===== Project: {project.name} =====")
         print("1. Add Task")
         print("2. View Tasks")
         print("3. Delete Task")
         print("4. Change Task Status")
-        print("5. Back to Main Menu")
+        print("5. Edit Project")
+        print("6. Back to Main Menu")
         choice = input("Enter your choice: ").strip()
 
         if choice == "1":
@@ -200,6 +219,9 @@ def project_menu(project):
                 print("Invalid input.")
 
         elif choice == "5":
+            project.edit_project(manager.projects)
+
+        elif choice == "6":
             break
 
         else:
