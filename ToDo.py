@@ -1,7 +1,7 @@
 from datetime import datetime
 
 DATE_FORMAT = "%Y-%m-%d"
-
+PROJECT_OF_NUMBER_MAX = 10
 
 class Task:
     def __init__(self, title, description="", deadline=None):
@@ -24,10 +24,10 @@ class Task:
         desc_str = f" | {self.description}" if self.description else ""
         return f"{self.title} ({self.status}){desc_str} | Deadline: {deadline_str}"
 
-
 class Project:
-    def __init__(self, name):
+    def __init__(self, name, description=""):
         self.name = name
+        self.description = description
         self.tasks = []
 
     def add_task(self, title, description="", deadline=None):
@@ -61,22 +61,33 @@ class Project:
         else:
             print("Invalid task number.")
 
-
 class ToDoManager:
     def __init__(self):
         self.projects = []
 
-    def add_project(self, name):
-        self.projects.append(Project(name))
+    def add_project(self, name, description):
+        if len(name) > 30:
+            print("Project name must not exceed 30 characters! Returning to main menu.")
+            return
+        if any(p.name == name for p in self.projects):
+            print("A project with this name already exists! Returning to main menu.")
+            return
+        if len(description) > 150:
+            print("Project description must not exceed 150 characters! Returning to main menu.")
+            return
+        if len(self.projects) >= PROJECT_OF_NUMBER_MAX:
+            print("Maximum number of projects reached! Cannot add more projects.")
+            return
+        self.projects.append(Project(name, description))
         print(f"Project '{name}' created successfully!")
 
     def view_projects(self):
         if not self.projects:
-            print("No projects yet.")
+            print("No projects yet. Returning to main menu.")
             return
         print("\nList of Projects:")
         for i, p in enumerate(self.projects, 1):
-            print(f"{i}. {p.name}")
+            print(f"{i}. {p.name} | Description: {p.description[:50]}")
 
     def select_project(self, index):
         if 0 <= index < len(self.projects):
@@ -91,28 +102,40 @@ class ToDoManager:
         else:
             print("Invalid project number.")
 
-
 def main():
     manager = ToDoManager()
-
     while True:
-        print("\n===== To-Do List (Projects Mode) =====")
+        print("\n===== To-Do List =====")
         print("1. Add Project")
         print("2. View Projects")
         print("3. Select Project")
         print("4. Delete Project")
         print("5. Quit")
-
         choice = input("Enter your choice: ").strip()
 
         if choice == "1":
-            name = input("Enter new project name: ").strip()
-            manager.add_project(name)
+            name = input("Enter new project name (max 30 characters): ").strip()
+            if len(name) > 30:
+                print("Project name must not exceed 30 characters! Returning to main menu.")
+                continue
+            if any(p.name == name for p in manager.projects):
+                print("A project with this name already exists! Returning to main menu.")
+                continue
+
+            description = input("Enter project description (max 150 characters): ").strip()
+            if len(description) > 150:
+                print("Project description must not exceed 150 characters! Returning to main menu.")
+                continue
+
+            manager.add_project(name, description)
 
         elif choice == "2":
             manager.view_projects()
 
         elif choice == "3":
+            if not manager.projects:
+                print("No projects yet. Returning to main menu.")
+                continue
             manager.view_projects()
             try:
                 index = int(input("Enter project number: ")) - 1
@@ -123,6 +146,9 @@ def main():
                 print("Invalid input.")
 
         elif choice == "4":
+            if not manager.projects:
+                print("No projects yet. Returning to main menu.")
+                continue
             manager.view_projects()
             try:
                 index = int(input("Enter project number to delete: ")) - 1
@@ -137,7 +163,6 @@ def main():
         else:
             print("Invalid choice. Try again.")
 
-
 def project_menu(project):
     while True:
         print(f"\n===== Project: {project.name} =====")
@@ -146,7 +171,6 @@ def project_menu(project):
         print("3. Delete Task")
         print("4. Change Task Status")
         print("5. Back to Main Menu")
-
         choice = input("Enter your choice: ").strip()
 
         if choice == "1":
@@ -180,7 +204,6 @@ def project_menu(project):
 
         else:
             print("Invalid choice.")
-
 
 if __name__ == "__main__":
     main()
