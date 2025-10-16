@@ -1,21 +1,19 @@
 from datetime import datetime
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+PROJECT_OF_NUMBER_MAX = int(os.getenv("PROJECT_OF_NUMBER_MAX", 10))
+TASK_OF_NUMBER_MAX = int(os.getenv("TASK_OF_NUMBER_MAX", 50))
 
 DATE_FORMAT = "%Y-%m-%d"
-PROJECT_OF_NUMBER_MAX = 10
-TASK_OF_NUMBER_MAX = 50
 
 class Task:
-    _id_counter = 1
-
     def __init__(self, title, description="", deadline=None):
         if len(title) > 30:
             raise ValueError("Task title must not exceed 30 characters!")
         if len(description) > 150:
             raise ValueError("Task description must not exceed 150 characters!")
-
-        self.id = Task._id_counter
-        Task._id_counter += 1
-
         self.title = title
         self.description = description
         self.status = "todo"
@@ -33,7 +31,28 @@ class Task:
     def __str__(self):
         deadline_str = self.deadline.strftime(DATE_FORMAT) if self.deadline else "-"
         desc_str = f" | {self.description}" if self.description else ""
-        return f"ID: {self.id} | {self.title} ({self.status}){desc_str} | Deadline: {deadline_str}"
+        return f"{self.title} ({self.status}){desc_str} | Deadline: {deadline_str}"
+
+    def edit_task(self):
+        new_title = input("Enter new task title (max 30 characters): ").strip()
+        if len(new_title) > 30:
+            print("Task title must not exceed 30 characters! Returning to task menu.")
+            return
+        new_description = input("Enter new task description (max 150 characters): ").strip()
+        if len(new_description) > 150:
+            print("Task description must not exceed 150 characters! Returning to task menu.")
+            return
+        new_status = input("Enter task status (todo/doing/done): ").strip().lower()
+        if new_status not in ["todo", "doing", "done"]:
+            print("Invalid status! Returning to task menu.")
+            return
+        deadline = input(f"Enter new deadline ({DATE_FORMAT}) or leave blank: ").strip() or None
+        self.title = new_title
+        self.description = new_description
+        self.status = new_status
+        if deadline:
+            self.set_deadline(deadline)
+        print("Task updated successfully!")
 
 class Project:
     def __init__(self, name, description=""):
@@ -57,53 +76,26 @@ class Project:
             print("No tasks in this project.")
             return
         print(f"\nTasks in project: {self.name}")
-        for t in self.tasks:
-            print(t)
+        for i, t in enumerate(self.tasks, 1):
+            print(f"{i}. {t}")
 
-    def delete_task(self, task_id):
-        for i, t in enumerate(self.tasks):
-            if t.id == task_id:
-                removed = self.tasks.pop(i)
-                print(f"Deleted task: '{removed.title}'")
-                return
-        print("Invalid task ID.")
+    def delete_task(self, index):
+        if 0 <= index < len(self.tasks):
+            removed = self.tasks.pop(index)
+            print(f"Deleted task: '{removed.title}'")
+        else:
+            print("Invalid task number.")
 
-    def change_status(self, task_id, new_status):
+    def change_status(self, index, new_status):
         valid_statuses = ["todo", "doing", "done"]
         if new_status not in valid_statuses:
             print("Invalid status. Choose from: todo, doing, done")
             return
-        for t in self.tasks:
-            if t.id == task_id:
-                t.status = new_status
-                print(f"Task '{t.title}' status changed to '{new_status}'.")
-                return
-        print("Invalid task ID.")
-
-    def edit_task(self, task_id):
-        for t in self.tasks:
-            if t.id == task_id:
-                new_title = input("Enter new task title (max 30 characters): ").strip()
-                if len(new_title) > 30:
-                    print("Task title must not exceed 30 characters! Returning to project menu.")
-                    return
-                new_description = input("Enter new task description (max 150 characters): ").strip()
-                if len(new_description) > 150:
-                    print("Task description must not exceed 150 characters! Returning to project menu.")
-                    return
-                new_status = input("Enter new status (todo/doing/done): ").strip().lower()
-                if new_status not in ["todo", "doing", "done"]:
-                    print("Invalid status! Returning to project menu.")
-                    return
-                new_deadline = input(f"Enter new deadline ({DATE_FORMAT}) or leave blank: ").strip() or None
-                t.title = new_title
-                t.description = new_description
-                t.status = new_status
-                if new_deadline:
-                    t.set_deadline(new_deadline)
-                print(f"Task ID {t.id} updated successfully!")
-                return
-        print("Invalid task ID.")
+        if 0 <= index < len(self.tasks):
+            self.tasks[index].status = new_status
+            print(f"Task '{self.tasks[index].title}' status changed to '{new_status}'.")
+        else:
+            print("Invalid task number.")
 
     def edit_project(self, projects):
         new_name = input("Enter new project name (max 30 characters): ").strip()
@@ -167,8 +159,8 @@ def main():
     while True:
         print("\n===== To-Do List =====")
         print("1. Add Project")
-        print("2. Edit Project")
-        print("3. View Projects")
+        print("2. View Projects")
+        print("3. Edit Project")
         print("4. Select Project")
         print("5. Delete Project")
         print("6. Quit")
@@ -176,10 +168,22 @@ def main():
 
         if choice == "1":
             name = input("Enter new project name (max 30 characters): ").strip()
+            if len(name) > 30:
+                print("Project name must not exceed 30 characters! Returning to main menu.")
+                continue
+            if any(p.name == name for p in manager.projects):
+                print("A project with this name already exists! Returning to main menu.")
+                continue
             description = input("Enter project description (max 150 characters): ").strip()
+            if len(description) > 150:
+                print("Project description must not exceed 150 characters! Returning to main menu.")
+                continue
             manager.add_project(name, description)
 
         elif choice == "2":
+            manager.view_projects()
+
+        elif choice == "3":
             if not manager.projects:
                 print("No projects yet. Returning to main menu.")
                 continue
@@ -191,9 +195,6 @@ def main():
                     project.edit_project(manager.projects)
             except ValueError:
                 print("Invalid input.")
-
-        elif choice == "3":
-            manager.view_projects()
 
         elif choice == "4":
             if not manager.projects:
@@ -230,8 +231,8 @@ def project_menu(project, manager):
     while True:
         print(f"\n===== Project: {project.name} =====")
         print("1. Add Task")
-        print("2. Edit Task")
-        print("3. View Tasks")
+        print("2. View Tasks")
+        print("3. Edit Task")
         print("4. Delete Task")
         print("5. Change Task Status")
         print("6. Back to Main Menu")
@@ -239,35 +240,44 @@ def project_menu(project, manager):
 
         if choice == "1":
             title = input("Enter task title (max 30 characters): ").strip()
+            if len(title) > 30:
+                print("Task title must not exceed 30 characters! Returning to project menu.")
+                continue
             description = input("Enter description (max 150 characters): ").strip()
+            if len(description) > 150:
+                print("Task description must not exceed 150 characters! Returning to project menu.")
+                continue
             deadline = input(f"Enter deadline ({DATE_FORMAT}) or leave blank: ").strip() or None
             project.add_task(title, description, deadline)
 
         elif choice == "2":
             project.view_tasks()
-            try:
-                task_id = int(input("Enter task ID to edit: "))
-                project.edit_task(task_id)
-            except ValueError:
-                print("Invalid input.")
 
         elif choice == "3":
             project.view_tasks()
+            try:
+                index = int(input("Enter task number to edit: ")) - 1
+                if 0 <= index < len(project.tasks):
+                    project.tasks[index].edit_task()
+                else:
+                    print("Invalid task number.")
+            except ValueError:
+                print("Invalid input.")
 
         elif choice == "4":
             project.view_tasks()
             try:
-                task_id = int(input("Enter task ID to delete: "))
-                project.delete_task(task_id)
+                index = int(input("Enter task number to delete: ")) - 1
+                project.delete_task(index)
             except ValueError:
                 print("Invalid input.")
 
         elif choice == "5":
             project.view_tasks()
             try:
-                task_id = int(input("Enter task ID to change status: "))
+                index = int(input("Enter task number to change status: ")) - 1
                 status = input("Enter new status (todo/doing/done): ").strip().lower()
-                project.change_status(task_id, status)
+                project.change_status(index, status)
             except ValueError:
                 print("Invalid input.")
 
