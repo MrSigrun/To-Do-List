@@ -2,9 +2,14 @@ from datetime import datetime
 
 DATE_FORMAT = "%Y-%m-%d"
 PROJECT_OF_NUMBER_MAX = 10
+TASK_OF_NUMBER_MAX = 50
 
 class Task:
     def __init__(self, title, description="", deadline=None):
+        if len(title) > 30:
+            raise ValueError("Task title must not exceed 30 characters!")
+        if len(description) > 150:
+            raise ValueError("Task description must not exceed 150 characters!")
         self.title = title
         self.description = description
         self.status = "todo"
@@ -31,9 +36,15 @@ class Project:
         self.tasks = []
 
     def add_task(self, title, description="", deadline=None):
-        task = Task(title, description, deadline)
-        self.tasks.append(task)
-        print(f"Task '{title}' added to project '{self.name}' successfully!")
+        if len(self.tasks) >= TASK_OF_NUMBER_MAX:
+            print(f"Maximum number of tasks ({TASK_OF_NUMBER_MAX}) reached! Cannot add more tasks.")
+            return
+        try:
+            task = Task(title, description, deadline)
+            self.tasks.append(task)
+            print(f"Task '{title}' added to project '{self.name}' successfully!")
+        except ValueError as ve:
+            print(f"Error adding task: {ve}")
 
     def view_tasks(self):
         if not self.tasks:
@@ -193,8 +204,16 @@ def project_menu(project, manager):
         choice = input("Enter your choice: ").strip()
 
         if choice == "1":
-            title = input("Enter task title: ")
-            description = input("Enter description (optional): ")
+            title = input("Enter task title (max 30 characters): ").strip()
+            if len(title) > 30:
+                print("Task title must not exceed 30 characters! Returning to project menu.")
+                continue
+
+            description = input("Enter description (max 150 characters): ").strip()
+            if len(description) > 150:
+                print("Task description must not exceed 150 characters! Returning to project menu.")
+                continue
+
             deadline = input(f"Enter deadline ({DATE_FORMAT}) or leave blank: ").strip() or None
             project.add_task(title, description, deadline)
 
