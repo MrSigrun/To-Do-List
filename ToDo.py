@@ -5,7 +5,6 @@ import os
 load_dotenv()
 PROJECT_OF_NUMBER_MAX = int(os.getenv("PROJECT_OF_NUMBER_MAX", 10))
 TASK_OF_NUMBER_MAX = int(os.getenv("TASK_OF_NUMBER_MAX", 50))
-
 DATE_FORMAT = "%Y-%m-%d"
 
 class Task:
@@ -73,13 +72,15 @@ class Project:
 
     def view_tasks(self):
         if not self.tasks:
-            print("No tasks in this project.")
+            print("No tasks in this project. Returning to task menu.")
             return
         print(f"\nTasks in project: {self.name}")
         for i, t in enumerate(self.tasks, 1):
             print(f"{i}. {t}")
 
     def delete_task(self, index):
+        if not self.tasks:
+            return
         if 0 <= index < len(self.tasks):
             removed = self.tasks.pop(index)
             print(f"Deleted task: '{removed.title}'")
@@ -88,6 +89,8 @@ class Project:
 
     def change_status(self, index, new_status):
         valid_statuses = ["todo", "doing", "done"]
+        if not self.tasks:
+            return
         if new_status not in valid_statuses:
             print("Invalid status. Choose from: todo, doing, done")
             return
@@ -153,6 +156,75 @@ class ToDoManager:
             print(f"Deleted project: '{removed.name}'")
         else:
             print("Invalid project number.")
+
+def project_menu(project, manager):
+    while True:
+        print(f"\n===== Project: {project.name} =====")
+        print("1. Add Task")
+        print("2. View Tasks")
+        print("3. Edit Task")
+        print("4. Delete Task")
+        print("5. Change Task Status")
+        print("6. Back to Main Menu")
+        choice = input("Enter your choice: ").strip()
+
+        if choice == "1":
+            title = input("Enter task title (max 30 characters): ").strip()
+            if len(title) > 30:
+                print("Task title must not exceed 30 characters! Returning to project menu.")
+                continue
+            description = input("Enter description (max 150 characters): ").strip()
+            if len(description) > 150:
+                print("Task description must not exceed 150 characters! Returning to project menu.")
+                continue
+            deadline = input(f"Enter deadline ({DATE_FORMAT}) or leave blank: ").strip() or None
+            project.add_task(title, description, deadline)
+
+        elif choice == "2":
+            project.view_tasks()
+
+        elif choice == "3":
+            if not project.tasks:
+                print("No tasks in this project. Returning to task menu.")
+                continue
+            project.view_tasks()
+            try:
+                index = int(input("Enter task number to edit: ")) - 1
+                if 0 <= index < len(project.tasks):
+                    project.tasks[index].edit_task()
+                else:
+                    print("Invalid task number.")
+            except ValueError:
+                print("Invalid input.")
+
+        elif choice == "4":
+            if not project.tasks:
+                print("No tasks in this project. Returning to task menu.")
+                continue
+            project.view_tasks()
+            try:
+                index = int(input("Enter task number to delete: ")) - 1
+                project.delete_task(index)
+            except ValueError:
+                print("Invalid input.")
+
+        elif choice == "5":
+            if not project.tasks:
+                print("No tasks in this project. Returning to task menu.")
+                continue
+            project.view_tasks()
+            try:
+                index = int(input("Enter task number to change status: ")) - 1
+                status = input("Enter new status (todo/doing/done): ").strip().lower()
+                project.change_status(index, status)
+            except ValueError:
+                print("Invalid input.")
+
+        elif choice == "6":
+            break
+
+        else:
+            print("Invalid choice.")
 
 def main():
     manager = ToDoManager()
@@ -222,66 +294,6 @@ def main():
 
         elif choice == "6":
             print("Goodbye!")
-            break
-
-        else:
-            print("Invalid choice. Try again.")
-
-def project_menu(project, manager):
-    while True:
-        print(f"\n===== Project: {project.name} =====")
-        print("1. Add Task")
-        print("2. View Tasks")
-        print("3. Edit Task")
-        print("4. Delete Task")
-        print("5. Change Task Status")
-        print("6. Back to Main Menu")
-        choice = input("Enter your choice: ").strip()
-
-        if choice == "1":
-            title = input("Enter task title (max 30 characters): ").strip()
-            if len(title) > 30:
-                print("Task title must not exceed 30 characters! Returning to project menu.")
-                continue
-            description = input("Enter description (max 150 characters): ").strip()
-            if len(description) > 150:
-                print("Task description must not exceed 150 characters! Returning to project menu.")
-                continue
-            deadline = input(f"Enter deadline ({DATE_FORMAT}) or leave blank: ").strip() or None
-            project.add_task(title, description, deadline)
-
-        elif choice == "2":
-            project.view_tasks()
-
-        elif choice == "3":
-            project.view_tasks()
-            try:
-                index = int(input("Enter task number to edit: ")) - 1
-                if 0 <= index < len(project.tasks):
-                    project.tasks[index].edit_task()
-                else:
-                    print("Invalid task number.")
-            except ValueError:
-                print("Invalid input.")
-
-        elif choice == "4":
-            project.view_tasks()
-            try:
-                index = int(input("Enter task number to delete: ")) - 1
-                project.delete_task(index)
-            except ValueError:
-                print("Invalid input.")
-
-        elif choice == "5":
-            project.view_tasks()
-            try:
-                index = int(input("Enter task number to change status: ")) - 1
-                status = input("Enter new status (todo/doing/done): ").strip().lower()
-                project.change_status(index, status)
-            except ValueError:
-                print("Invalid input.")
-
-        elif choice == "6":
             break
 
         else:
